@@ -12,11 +12,11 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # Tomo
-/target
+target
 **/*.rs.bk
 Cargo.lock
 bin/
-pkg/
+pkg
 wasm-pack.log
 *.iml
 .idea
