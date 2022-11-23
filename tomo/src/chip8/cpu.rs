@@ -1,4 +1,4 @@
-use crate::chip8::display::{Display, BREITE, HOEHE, FONT};
+use crate::chip8::display::{BREITE, Display, FONT, HOEHE};
 use crate::chip8::utils::random_byte;
 use crate::prelude::*;
 
@@ -8,18 +8,18 @@ pub struct Cpu {
     // "Memory" (Speicher) bestehend aus 4kb
     mem: [u8; 4096],
     // "Program Counter" (Programmzähler) Pointer der auf die aktuelle Instruktion im Speicher zeigt
-    pc: u16,
+    pub pc: u16,
     // "Index register" Pointer der auf Stellen im Speicher zeigt
-    i: u16,
+    pub i: u16,
     // "Stack" 16-bit Adressen für Funktionen, auf die der CPU zurückgreifen kann um Rückgaben zu erhalten
     stack: [u16; 16],
     // "Stack pointer" Pointer der auf Stellen im Stack
-    sp: u16,
+    pub sp: u16,
     // "Delay Timer" 8-bit Zahl, die 60 mal pro Sekunde verringert wird, bis er null erreicht
-    dt: u8,
+    pub dt: u8,
     // "Sound Timer" 8-bit Zahl, die 60 mal pro Sekunde verringert wird, bis er null erreicht
     // Ist der ST > 0 wird ein Ton abgespielt
-    st: u8,
+    pub st: u8,
     // Register, um alles mögliche des Programmes (Wie Variablen) zu speichern
     // Register VF wird aber hauptsächlich als Flaggenträger genutzt und wird daher nur auf "0" oder "1" gestellt
     // Register:
@@ -30,7 +30,7 @@ pub struct Cpu {
     // Speicher für gedrückte Tasten
     keys: [bool; 16],
     // Speichert die zuletzt gedrückte Taste
-    current_key: Option<u8>,
+    pub current_key: Option<u8>,
 }
 
 // Implementation für die Klasse und seine Methoden
@@ -59,20 +59,13 @@ impl Cpu {
         }
     }
 
-    // Funktion um die Schrift in den Speicher zu laden, damit der CPU Zugriff darauf hat
-    pub fn set_font(&mut self) {
-        for i in 0..80 {
-            self.mem[i] = FONT[i];
-        }
-    }
-
     // Gibt true oder false zurück, je nach dem ob der Sound-Timer positiv ist oder nicht
     pub fn should_beep(&self) -> bool {
         self.st > 0
     }
 
     // Fetch gibt den nächsten Opcode im Speicher zurück
-    fn fetch(&mut self) -> u16 {
+    pub fn fetch(&mut self) -> u16 {
         let pc = self.pc as usize;
         // Verschieben der ersten 8 bytes nach links und eine OR-Operation an den hinteren 8
         let opcode = u16::from(self.mem[pc]) << 8 | u16::from(self.mem[pc + 1]);
@@ -81,7 +74,7 @@ impl Cpu {
     }
 
     // Ausführen des gegeben Opcodes
-    fn execute(&mut self, opcode: u16) -> bool {
+    pub fn execute(&mut self, opcode: u16) -> bool {
         // Auftrennen des Opcodes in die verschiedenen "Nibbles" über den AND-Operator
         let instr = opcode & 0xF000;
         let subinstr = opcode & 0x000F;
@@ -105,7 +98,10 @@ impl Cpu {
                         self.pc = self.stack[self.sp as usize];
                         self.sp -= 1;
                     }
-                    _ => { return false }
+                    _ => {
+                        log!("Opcode is invalid: {}", opcode);
+                        return false;
+                    }
                 }
             }
             0x1000 => {
@@ -178,15 +174,25 @@ impl Cpu {
                         self.registers[vx] >>= 1
                     }
                     7 => {
+                        // SUBN vx, vy
+                        // vx = vy - vx, setze vf = 1 wenn vy > vx
+                        if self.registers[vy] > self.registers[vx] {
+                            self.registers[15] = 1;
+                        } else {
+                            self.registers[15] = 0;
+                        }
                         self.registers[vx] = self.registers[vy] - self.registers[vx];
                     }
                     0xE => {
                         let msb = (self.registers[vx] & 0b1000_0000) >> 7;
-                        // 15 für VF
+                        // Setze VF-Register zum wichtigsten bit for der shift-Operation
                         self.registers[15] = msb;
                         self.registers[vx] <<= 1;
                     }
-                    _ => { return false }
+                    _ => {
+                        log!("Opcode is invalid: {}", opcode);
+                        return false;
+                    }
                 }
             }
             0x9000 => {
@@ -238,19 +244,26 @@ impl Cpu {
 
                         let display_idx = (wy as usize) * BREITE + (wx as usize);
                         if display_idx > (HOEHE * BREITE) {
-                            return false
+                            log!("wx: {}, wy: {}, px: {}, py: {}", wy, wx, px, py);
+                            return false;
                         }
 
-                        if self.display.get_pixel(wx as usize, wy as usize)
+                        // VF setzen, wenn wir einen Pixel löschen
+                        if self.registers[15] == 0
                             && value == 1
-                            // 15 für VF
-                            && self.registers[15] == 1
+                            && self.display.get_pixel_single(display_idx)
                         {
-                            // 15 für VF
-                            self.registers[15] = 0
+                            self.registers[15] = 1;
                         }
 
-                        self.display.set_pixel(wx as usize, wy as usize, value != 0);
+                        let mut old_status = if self.display.get_pixel_single(display_idx) { 1 } else { 0 };
+
+                        // XOR für den Display-Wert
+                        old_status ^= value;
+
+                        // pixel setzen
+                        self.display.set_pixel_single(display_idx, old_status == 1);
+
                         px += 1;
                     }
                     px = self.registers[vx];
@@ -275,7 +288,10 @@ impl Cpu {
                             self.pc += 2;
                         }
                     }
-                    _ => { return false }
+                    _ => {
+                        log!("Opcode is invalid: {}", opcode);
+                        return false;
+                    }
                 }
             }
             0xF000 => {
@@ -290,7 +306,7 @@ impl Cpu {
                         // Ansonsten: Setze den u8 der Taste auf das Register von Vx
                         match self.current_key {
                             Some(key) => self.registers[vx] = key as u8,
-                            None => self.pc -= 1
+                            None => self.pc -= 2
                         }
                     }
                     0x15 => {
@@ -332,10 +348,16 @@ impl Cpu {
                             self.registers[idx] = self.mem[self.i as usize + idx];
                         }
                     }
-                    _ => { return false }
+                    _ => {
+                        log!("Opcode is invalid: {}", opcode);
+                        return false;
+                    }
                 }
             }
-            _ => { return false }
+            _ => {
+                log!("Opcode is invalid: {}", opcode);
+                return false;
+            }
         }
 
         true
@@ -361,6 +383,16 @@ impl Cpu {
 
         // Display leeren
         self.display.clear_display();
+
+        // Schrift neu hinzufügen
+        self.set_font();
+    }
+
+    // Funktion um die Schrift in den Speicher zu laden, damit der CPU Zugriff darauf hat
+    fn set_font(&mut self) {
+        for i in 0..80 {
+            self.mem[i] = FONT[i];
+        }
     }
 
     pub fn pc(&self) -> u16 { self.pc }
@@ -411,5 +443,25 @@ impl Cpu {
         let opcode = self.fetch();
         // Opcode ausführen
         self.execute(opcode)
+    }
+
+    pub fn test_set_registers(&mut self, idx: usize, data: u8) {
+        self.registers[idx] = data;
+    }
+
+    pub fn test_get_registers(&mut self, idx: usize) -> u8 {
+        self.registers[idx]
+    }
+
+    pub fn test_set_memory(&mut self, idx: usize, data: u8) {
+        self.mem[idx] = data;
+    }
+
+    pub fn test_get_memory(&mut self, idx: usize) -> u8 {
+        self.mem[idx]
+    }
+
+    pub fn test_get_stack(&mut self, idx: usize) -> u16 {
+        self.stack[idx]
     }
 }

@@ -1,3 +1,3 @@
-mod cpu;
-mod display;
+pub mod cpu;
+pub mod display;
 mod utils;

@@ -1,8 +1,8 @@
 use crate::prelude::*;
 
 // Konstanten für Pixelhöhe und Pixelbreite des Display
-pub const HOEHE: usize = 64;
-pub const BREITE: usize = 32;
+pub const HOEHE: usize = 32;
+pub const BREITE: usize = 64;
 
 // Konstante für die Schriftart (Standard Schrift in Hex-Format)
 pub const FONT: [u8; 80] = [
@@ -53,6 +53,10 @@ impl Display {
 
     pub fn get_pixel_single(&self, position: usize) -> bool {
         self.mem[position] == 1
+    }
+
+    pub fn set_pixel_single(&mut self, position: usize, state: bool) {
+        self.mem[position] = if state {1} else {0};
     }
 
     // Bildschirm komplett leeren

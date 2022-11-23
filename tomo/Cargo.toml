@@ -3,7 +3,6 @@ name = "tomo"
 version = "0.1.0"
 authors = ["Luca M. Schmidt <drageast.lp04@gmail.com>"]
 license = "MIT-LICENSE"
-license-file = "LICENSE"
 edition = "2018"
 
 [lib]
@@ -22,6 +21,9 @@ js-sys = "0.3.60"
 
 # Error handling
 thiserror = "1"
+
+# Test für wasm
+wasm-bindgen-test = "0.3.33"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
