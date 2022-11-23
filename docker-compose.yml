@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  tomo:
+    container_name: "tomo"
+    depends_on:
+      - wasm_pack
+    build:
+      context: "./"
+      dockerfile: ".dockerfile"
+    volumes:
+      - type: volume
+        source: tomoakemi
+        target: tomo
+
+  akemi:
+    container_name: "akemi"
+    build:
+      context: "./"
+      dockerfile: ".dockerfile"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - tomo
+    volumes:
+      - type: volume
+        source: tomoakemi
+        target: akemi
+
+  wasm_pack:
+    image: "rnsloan/wasm-pack"
+    command:
+      -run
+    volumes:
+      - type: volume
+        source: tomoakemi
+        target: tomo
+
+volumes:
+  tomoakemi:
