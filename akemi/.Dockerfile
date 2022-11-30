@@ -4,7 +4,9 @@ FROM node:18
 WORKDIR .
 COPY . .
 
-RUN pnpm install && pnpm run lint && pnpm run format && pnpm run build
+RUN npm install -g pnpm
+
+RUN pnpm install pnpm run build
 
 # RUN
 
