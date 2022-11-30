@@ -4,40 +4,29 @@
 	import * as wasm from 'tomo';
 
 	let emulator: wasm.Cpu;
-	let bug_fix = 'If you can see me, ignore me or refresh the page :3';
 	let running = false;
-	let display_loop = Array(64 * 32);
-	let refs: Array<HTMLElement> = Array(64 * 32);
 	let audio;
 
 	if (browser) {
 		emulator = new wasm.Cpu();
-		bug_fix = '';
 	}
 
 	// Laden der ROM
 	async function handleChange(e) {
 		const file: File = e.target.files[0];
-		const text = await file.text();
-		const bytes = new Uint8Array(file.size);
-		for (let i = 0; i < text.length; i++) {
-			bytes[i] = text.charCodeAt(i);
-		}
+		const text = await file.arrayBuffer();
+		const bytes = new Uint8Array(text);
 		console.log(bytes);
 		emulator.load_rom(bytes);
 		alert('ROM loaded');
 	}
 
-	// Selbsterklärend
-	function getPixelData(position: number): boolean {
-		if (!browser) return false;
-		return emulator.display.get_pixel_single(position);
-	}
 
 	function startStop() {
 		if (running) {
 			running = false;
 			emulator.reset();
+			updateDisplay(Uint32Array.from(Array(64*32)))
 		} else {
 			running = true;
 		}
@@ -45,45 +34,61 @@
 
 	function gameLoop() {
 		console.log('loop');
-		let success = emulator.tick();
-		if (!success) {
+		let output = emulator.tick();
+		if (!output.success) {
 			running = false;
 			alert("ERROR: The emulator was unable to deconstruct and execute the provided opcode")
-		}
-		// TODO: Geht nicht
-		// Brauchen wir um den Bildschirm zeu zu zeichnen
-		for (let i = 0; i < 64*32; i++) {
-			console.log('update pixels');
-			let ref = refs[i];
-			if (!ref) {
-				console.log("No ref! I: ", i)
-			}
-			if (ref.classList.contains('on') && !emulator.display.get_pixel_single(i)) {
-				ref.classList.remove('on');
-				ref.classList.add('off');
-			} else if (ref.classList.contains('off') && emulator.display.get_pixel_single(i)) {
-				ref.classList.remove('off');
-				ref.classList.add('on');
-			}
 		}
 
 		if (emulator.should_beep() && audio) {
 			audio.play();
 		}
 
+		// Display neu zeichnen
+		updateDisplay(output.edited_pixels);
+
 		// Um die 60hz stabil zu halten
 		if (running) window.requestAnimationFrame(gameLoop);
 	}
 
 	$: if (running) gameLoop();
+
+	function updateDisplay(updates: Uint32Array) {
+		console.log("update Display called");
+
+		for (let i = 0; i < updates.length; i += 1) {
+			console.log("update pixels");
+			let j = updates[i]
+			let ref = refs[j];
+			if (!ref) {
+				console.log("No ref! I: ", i);
+			}
+			if (ref.classList.contains("on") && !emulator.display.get_pixel_state(j)) {
+				ref.classList.remove("on");
+				ref.classList.add("off");
+			} else if (ref.classList.contains("off") && emulator.display.get_pixel_state(j)) {
+				ref.classList.remove("off");
+				ref.classList.add("on");
+			}
+		}
+	}
+
+	let refs: Array<HTMLElement> = Array(64 * 32);
+
+	function getPixelData(position: number): boolean {
+		if (!browser) return false;
+		return emulator.display.get_pixel_state(position);
+
+	}
 </script>
 
 <main>
-	<audio src="https://www.soundjay.com/buttons/beep-02.mp3" bind:this={audio} />
-	<div class="emulator_window">
-		{bug_fix}
-		{#each display_loop as _, i}
-			<div class:on={getPixelData(i)} class:off={!getPixelData(i)} bind:this={refs[i]} />
+	<audio src="https://www.soundjay.com/buttons/beep-02.mp3" bind:this={audio}>
+	</audio>
+	<div class="display">
+		{#each Array(64 * 32) as _, i}
+			<div class:on={getPixelData(i)} class:off={!getPixelData(i)} bind:this={refs[i]}>
+			</div>
 		{/each}
 	</div>
 	<div class="settings">

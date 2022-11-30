@@ -20,3 +20,4 @@ pkg
 wasm-pack.log
 *.iml
 .idea
+alter_chip

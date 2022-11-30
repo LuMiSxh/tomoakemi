@@ -1,8 +1,10 @@
-use tomo::chip8::cpu::Cpu as CHIP8;
-use tomo::chip8::display::{BREITE, HOEHE};
+use tomo::chip8::processor::{Key, Processor as CHIP8};
+use tomo::chip8::DISPLAY_HEIGHT as HOEHE;
+use tomo::chip8::DISPLAY_WIDTH as BREITE;
 
 use wasm_bindgen_test::*;
 
+// TODO: Tests beheben
 #[wasm_bindgen_test]
 fn test_initialization() {
     let emu = CHIP8::new();
@@ -13,8 +15,8 @@ fn test_initialization() {
 fn test_fetch() {
     let mut emu = CHIP8::new();
     //Setzen fon test-opcodes
-    emu.test_set_memory(0x200, 0xAB);
-    emu.test_set_memory(0x201, 0xCD);
+    emu.test_set_ram(0x200, 0xAB);
+    emu.test_set_ram(0x201, 0xCD);
     // Lesen des ersten opcodes
     let opcode = emu.fetch();
     assert_eq!(opcode, 0xABCD);
@@ -24,12 +26,12 @@ fn test_fetch() {
 fn test_load_rom() {
     let mut emu = CHIP8::new();
     // Test um zu schauen, ob alle bytes geschrieben werden
-    let bytes_written = emu.load_rom(Some(Box::new([1; 8])));
+    let bytes_written = emu.load_data(Some(Box::new([1; 8])));
     assert_eq!(bytes_written, 8);
     // Test um zu schauen, ob ROM an passender stelle geladen ist
     let start = 0x200;
     for idx in 0..8 {
-        assert_eq!(emu.test_get_memory(start + idx), 1);
+        assert_eq!(emu.test_get_ram(start + idx), 1);
     }
 }
 
@@ -200,7 +202,7 @@ fn test_execute_0x9000() {
 fn test_execute_0xa000() {
     let mut emu = CHIP8::new();
     emu.execute(0xABCD);
-    assert_eq!(emu.i, 0xBCD);
+    assert_eq!(emu.i_reg, 0xBCD);
 }
 
 #[wasm_bindgen_test]
@@ -224,40 +226,40 @@ fn test_execute_0xc000() {
 fn test_execute_0xd000() {
     let mut emu = CHIP8::new();
     // Fake sprite.
-    emu.test_set_memory(0, 0xFF);
+    emu.test_set_ram(0, 0xFF);
 
     emu.execute(0xD001);
     // VF-Register sollte 0 sein
     assert_eq!(emu.test_get_registers(15), 0);
     // Test, ob der Sprite in den Display-Speicher gelesen wurde
     for idx in 0..8 {
-        assert_eq!(emu.display.get_pixel_single(idx), true);
+        assert_eq!(emu.display.get_pixel(0, idx), true);
     }
     // Sprite an die selbe Stelle zu schreiben, sollte das VF-Register zurücksetzen
-    emu.test_set_memory(0, 0xFF);
+    emu.test_set_ram(0, 0xFF);
     emu.execute(0xD001);
     assert_eq!(emu.test_get_registers(15), 1);
     // Test, ob der Sprite in den Display-Speicher gelesen wurde
     for idx in 0..8 {
-        assert_eq!(emu.display.get_pixel_single(idx), false);
+        assert_eq!(emu.display.get_pixel(0, idx), false);
     }
 
     // Test horizontales wrapping
-    emu.test_set_memory(0, 0xFF);
-    emu.test_set_memory(1, 0xFF);
+    emu.test_set_ram(0, 0xFF);
+    emu.test_set_ram(1, 0xFF);
 
     emu.test_set_registers(0, (BREITE - 1) as u8);
     emu.test_set_registers(1, 0);
 
     emu.execute(0xD011);
     // Sollte rechts starten und links weitergehen
-    assert_eq!(emu.display.get_pixel_single(BREITE - 1), true);
-    emu.display.set_pixel_single(BREITE - 1, false);
+    assert_eq!(emu.display.get_pixel(0, BREITE - 1), true);
+    emu.display.set_pixel(0, BREITE - 1, false);
 
     for idx in 0..7 {
-        assert_eq!(emu.display.get_pixel_single(idx), true);
+        assert_eq!(emu.display.get_pixel(0, idx), true);
         // Zurücksetzen auf 0
-        emu.display.set_pixel_single(idx, false);
+        emu.display.set_pixel(0, idx, false);
     }
 
     emu.test_set_registers(0, (BREITE - 1) as u8);
@@ -265,12 +267,12 @@ fn test_execute_0xd000() {
 
     emu.execute(0xD012);
     // Rechts oben und Links unten setzen
-    assert_eq!(emu.display.get_pixel_single(BREITE - 1), true);
-    assert_eq!(emu.display.get_pixel_single((HOEHE - 1) * BREITE + (BREITE - 1)), true);
+    assert_eq!(emu.display.get_pixel(0, BREITE - 1), true);
+    assert_eq!(emu.display.get_pixel(HOEHE - 1, 0), true);
     // Links oben 7 und unten links 7 pixel
     for idx in 0..7 {
-        assert_eq!(emu.display.get_pixel_single(idx), true);
-        assert_eq!(emu.display.get_pixel_single((HOEHE - 1) * BREITE + idx), true);
+        assert_eq!(emu.display.get_pixel(0, idx), true);
+        assert_eq!(emu.display.get_pixel(HOEHE - 1, idx), true);
     }
 }
 
@@ -282,7 +284,7 @@ fn test_execute_0xf000() {
     emu.execute(0xF033);
     // Sollte die Zahlen 1, 2 und 3 in jeweils einem individuellen Speicherplatz haben
     for idx in 0..3 {
-        assert_eq!(emu.test_get_memory(idx), (idx + 1) as u8);
+        assert_eq!(emu.test_get_ram(idx), (idx + 1) as u8);
     }
 
     // Simulation Knopfdruck
@@ -290,7 +292,7 @@ fn test_execute_0xf000() {
     emu.execute(0xF00A);
     // PC sollte um 2 kleiner werden um warten zu simulieren, während auf die Eingabe gewartet wird
     assert_eq!(old_pc - 2, emu.pc);
-    emu.current_key = Some(10);
+    emu.current_key = Some(Key::K9);
     emu.execute(0xF00A);
     assert_eq!(emu.test_get_registers(0), 0x0A);
 }

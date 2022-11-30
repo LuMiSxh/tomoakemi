@@ -1,6 +1,12 @@
 use crate::chip8::display::{BREITE, Display, FONT, HOEHE};
-use crate::chip8::utils::random_byte;
+use crate::log;
 use crate::prelude::*;
+
+#[wasm_bindgen(getter_with_clone)]
+pub struct Output {
+    pub success: bool,
+    pub edited_pixels: Vec<usize>,
+}
 
 // Die Struktur stellt das Gerüst einer Klasse dar. In diesem Fall den CPU
 #[wasm_bindgen]
@@ -42,7 +48,7 @@ impl Cpu {
         // Error Hook-Initialisieren
         #[cfg(feature = "console_error_panic_hook")]
         console_error_panic_hook::set_once();
-        Cpu {
+        let mut cpu = Cpu {
             mem: [0; 4096],
             // PC muss auf den Hex-Wert von 512 gesetzt werden, da alle Werte darunter im Speicher
             // ursprünglich für den Interpreter genutzt wurden (Entfällt im Emulator aber)
@@ -56,7 +62,12 @@ impl Cpu {
             display: Display::new(),
             keys: [false; 16],
             current_key: None,
-        }
+        };
+
+        // Laden der Schrift
+        cpu.set_font();
+
+        cpu
     }
 
     // Gibt true oder false zurück, je nach dem ob der Sound-Timer positiv ist oder nicht
@@ -67,6 +78,7 @@ impl Cpu {
     // Fetch gibt den nächsten Opcode im Speicher zurück
     pub fn fetch(&mut self) -> u16 {
         let pc = self.pc as usize;
+        log!("PC: {}, PC+1: {}", pc, pc+1);
         // Verschieben der ersten 8 bytes nach links und eine OR-Operation an den hinteren 8
         let opcode = u16::from(self.mem[pc]) << 8 | u16::from(self.mem[pc + 1]);
         self.pc += 2;
@@ -74,7 +86,9 @@ impl Cpu {
     }
 
     // Ausführen des gegeben Opcodes
-    pub fn execute(&mut self, opcode: u16) -> bool {
+    pub fn execute(&mut self, opcode: u16) -> Output {
+        // Speicherplatz der modifizierten pixel
+        let mut edited_pixels: Vec<usize> = vec![];
         // Auftrennen des Opcodes in die verschiedenen "Nibbles" über den AND-Operator
         let instr = opcode & 0xF000;
         let subinstr = opcode & 0x000F;
@@ -92,6 +106,7 @@ impl Cpu {
                     0xE0 => {
                         // Display leeren
                         self.display.clear_display();
+                        edited_pixels = (0..(HOEHE * BREITE)).collect();
                     }
                     0xEE => {
                         // Rückgabe von einer Subroutine
@@ -99,8 +114,13 @@ impl Cpu {
                         self.sp -= 1;
                     }
                     _ => {
-                        log!("Opcode is invalid: {}", opcode);
-                        return false;
+                        log!("Opcode is invalid: {:#X}", opcode);
+                        log!("instr: {:#X}, subinstr: {:#X}, lower: {:#X}", instr, subinstr, lower);
+                        log!("Hier?");
+                        return Output {
+                            success: false,
+                            edited_pixels,
+                        };
                     }
                 }
             }
@@ -185,13 +205,17 @@ impl Cpu {
                     }
                     0xE => {
                         let msb = (self.registers[vx] & 0b1000_0000) >> 7;
-                        // Setze VF-Register zum wichtigsten bit for der shift-Operation
+                        // Setze VF-Register zum wichtigsten bit vor der shift-Operation
                         self.registers[15] = msb;
                         self.registers[vx] <<= 1;
                     }
                     _ => {
-                        log!("Opcode is invalid: {}", opcode);
-                        return false;
+                        log!("Opcode is invalid: {:#X}", opcode);
+                        log!("instr: {:#X}, subinstr: {:#X}, lower: {:#X}", instr, subinstr, lower);
+                        return Output {
+                            success: false,
+                            edited_pixels,
+                        };
                     }
                 }
             }
@@ -216,7 +240,6 @@ impl Cpu {
                 // gespeichert wird
                 self.registers[vx] = random_byte() & lower;
             }
-            // DRW Vx, Vy, ..Nibble: Display-Operationen
             0xD000 => {
                 // 15 für VF
                 self.registers[15] = 0;
@@ -245,24 +268,30 @@ impl Cpu {
                         let display_idx = (wy as usize) * BREITE + (wx as usize);
                         if display_idx > (HOEHE * BREITE) {
                             log!("wx: {}, wy: {}, px: {}, py: {}", wy, wx, px, py);
-                            return false;
+                            log!("instr: {:#X}, subinstr: {:#X}, lower: {:#X}", instr, subinstr, lower);
+                            log!("Opcode is invalid: {:#X}", opcode);
+                            return Output {
+                                success: false,
+                                edited_pixels,
+                            };
                         }
 
                         // VF setzen, wenn wir einen Pixel löschen
                         if self.registers[15] == 0
                             && value == 1
-                            && self.display.get_pixel_single(display_idx)
+                            && self.display.get_pixel_state(display_idx)
                         {
                             self.registers[15] = 1;
                         }
 
-                        let mut old_status = if self.display.get_pixel_single(display_idx) { 1 } else { 0 };
+                        let mut old_status = if self.display.get_pixel_state(display_idx) { 1 } else { 0 };
 
                         // XOR für den Display-Wert
                         old_status ^= value;
 
                         // pixel setzen
-                        self.display.set_pixel_single(display_idx, old_status == 1);
+                        self.display.set_pixel_state(display_idx, old_status == 1);
+                        edited_pixels.push(display_idx);
 
                         px += 1;
                     }
@@ -289,8 +318,12 @@ impl Cpu {
                         }
                     }
                     _ => {
-                        log!("Opcode is invalid: {}", opcode);
-                        return false;
+                        log!("instr: {:#X}, subinstr: {:#X}, lower: {:#X}", instr, subinstr, lower);
+                        log!("Opcode is invalid: {:#X}", opcode);
+                        return Output {
+                            success: false,
+                            edited_pixels,
+                        };
                     }
                 }
             }
@@ -349,18 +382,29 @@ impl Cpu {
                         }
                     }
                     _ => {
-                        log!("Opcode is invalid: {}", opcode);
-                        return false;
+                        log!("instr: {:#X}, subinstr: {:#X}, lower: {:#X}", instr, subinstr, lower);
+                        log!("Opcode is invalid: {:#X}", opcode);
+                        return Output {
+                            success: false,
+                            edited_pixels,
+                        };
                     }
                 }
             }
             _ => {
-                log!("Opcode is invalid: {}", opcode);
-                return false;
+                log!("instr: {:#X}, subinstr: {:#X}, lower: {:#X}", instr, subinstr, lower);
+                log!("Opcode is invalid: {:#X}", opcode);
+                return Output {
+                    success: false,
+                    edited_pixels,
+                };
             }
         }
 
-        true
+        Output {
+            success: true,
+            edited_pixels,
+        }
     }
 
     pub fn reset(&mut self) {
@@ -396,6 +440,7 @@ impl Cpu {
     }
 
     pub fn pc(&self) -> u16 { self.pc }
+
     pub fn sp(&self) -> u16 { self.sp }
 
     // Taste gedrückt
@@ -426,11 +471,12 @@ impl Cpu {
                 start += 1;
             }
         }
+        log!("ROM loaded into memory. Size: {} bytes", start);
         start
     }
 
     // Globaler Handler für den CPU der je einen Cycle ausführt
-    pub fn tick(&mut self) -> bool {
+    pub fn tick(&mut self) -> Output {
         if self.dt > 0 {
             self.dt -= 1;
         }

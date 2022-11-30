@@ -7,18 +7,17 @@ main
 
   background-color: $grey
 
-.emulator_window
+.display
   aspect-ratio: 2/1
-  grid-column: 1
-  width: 100%
+  display: grid
+  grid-template-columns: repeat(64, 100%/64)
+  grid-template-rows: repeat(32, 100%/32)
+
+  background-color: $baseViolet
   background-image: radial-gradient(circle at center, $darkerViolet, transparent)
   background-repeat: no-repeat
   background-position: center
   animation: pulse 1s linear infinite
-  display: grid
-  grid-template-columns: repeat(64, 100%/64)
-  grid-template-rows: repeat(32, 50%/32)
-
   @keyframes pulse
     0%
       background-size: 150% 150%
@@ -26,6 +25,8 @@ main
       background-size: 300% 300%
     100%
       background-size: 150% 150%
+
+  border-radius: 2%
 
   .on
     width: 100%
@@ -38,6 +39,7 @@ main
     height: 100%
 
     background-color: black
+
 
 .settings
   grid-column: 2

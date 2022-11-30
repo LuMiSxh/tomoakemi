@@ -19,9 +19,6 @@ rand = { version = "0.8.5" }
 getrandom = { version = "0.2", features = ["js"] }
 js-sys = "0.3.60"
 
-# Error handling
-thiserror = "1"
-
 # Test für wasm
 wasm-bindgen-test = "0.3.33"
 

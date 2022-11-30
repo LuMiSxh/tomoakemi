@@ -1,10 +1,8 @@
-# あけみ (Akemi)
+# とも (Tomo)
 
-Akemi consists of a Sveltekit frontend using the Vite build-tool.
+Tomo is the emulator written in Rust, which gets compiled into Webassembly.
 
 ## Usage
 
-- *Build*: `pnpm build`
-- *Dev*: `pnpm dev` __(Does not currently support Webassembly)__
-- *Preview*: `pnpm preview`
-- *Test*: `pnpm test`
+- *Build*: `wasm-pack build`
+- *Test*: `wasm-pack test`

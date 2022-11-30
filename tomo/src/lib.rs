@@ -1,6 +1,6 @@
 pub mod chip8;
 pub mod prelude;
-pub mod log;
+pub mod reporting;
 
 
 // Wenn Feature "wee_alloc" ist aktiv, nutze "wee_alloc" als "globalen memory allocator"
