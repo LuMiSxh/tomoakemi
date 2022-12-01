@@ -1,8 +1,8 @@
-use tomo::chip8::processor::{Key, Processor as CHIP8};
+use wasm_bindgen_test::*;
+
 use tomo::chip8::DISPLAY_HEIGHT as HOEHE;
 use tomo::chip8::DISPLAY_WIDTH as BREITE;
-
-use wasm_bindgen_test::*;
+use tomo::chip8::processor::{Key, Processor as CHIP8, Register};
 
 // TODO: Tests beheben
 #[wasm_bindgen_test]
@@ -23,17 +23,14 @@ fn test_fetch() {
 }
 
 #[wasm_bindgen_test]
-fn test_load_rom() {
+fn test_load_data() {
     let mut emu = CHIP8::new();
-    // Test um zu schauen, ob alle bytes geschrieben werden
-    let bytes_written = emu.load_data(Some(Box::new([1; 8])));
-    assert_eq!(bytes_written, 8);
-    // Test um zu schauen, ob ROM an passender stelle geladen ist
-    let start = 0x200;
-    for idx in 0..8 {
-        assert_eq!(emu.test_get_ram(start + idx), 1);
-    }
+    emu.load(vec![1, 2, 3]);
+    assert_eq!(emu.test_get_ram(0x200), 1);
+    assert_eq!(emu.test_get_ram(0x201), 2);
+    assert_eq!(emu.test_get_ram(0x202), 3);
 }
+
 
 #[wasm_bindgen_test]
 fn test_execute_0x1000() {
@@ -49,7 +46,7 @@ fn test_execute_0x2000() {
     // Test CALL-Operation
     emu.pc = 0xDEAD;
     emu.execute(0x2FED);
-    assert_eq!(emu.pc, 0x0FED);
+    assert_eq!(emu.pc, 0xFEF);
     assert_eq!(emu.test_get_stack(emu.sp as usize), 0xDEAD);
 }
 
@@ -60,12 +57,12 @@ fn test_execute_0x3000() {
     emu.pc = 0;
     emu.test_set_registers(0, 0xAD);
     emu.execute(0x30AD);
-    assert_eq!(emu.pc, 2);
+    assert_eq!(emu.pc, 4);
 
     emu.pc = 0;
     emu.test_set_registers(0, 0);
     emu.execute(0x30AD);
-    assert_eq!(emu.pc, 0);
+    assert_eq!(emu.pc, 2);
 }
 
 #[wasm_bindgen_test]
@@ -195,7 +192,7 @@ fn test_execute_0x9000() {
     emu.test_set_registers(1, 0xCD);
 
     emu.execute(0x9010);
-    assert_eq!(emu.pc, 2);
+    assert_eq!(emu.pc, 4);
 }
 
 #[wasm_bindgen_test]
@@ -230,7 +227,7 @@ fn test_execute_0xd000() {
 
     emu.execute(0xD001);
     // VF-Register sollte 0 sein
-    assert_eq!(emu.test_get_registers(15), 0);
+    assert_eq!(emu.test_get_registers(Register::VF as usize), 0);
     // Test, ob der Sprite in den Display-Speicher gelesen wurde
     for idx in 0..8 {
         assert_eq!(emu.display.get_pixel(0, idx), true);
@@ -238,7 +235,7 @@ fn test_execute_0xd000() {
     // Sprite an die selbe Stelle zu schreiben, sollte das VF-Register zurücksetzen
     emu.test_set_ram(0, 0xFF);
     emu.execute(0xD001);
-    assert_eq!(emu.test_get_registers(15), 1);
+    assert_eq!(emu.test_get_registers(Register::VF as usize), 1);
     // Test, ob der Sprite in den Display-Speicher gelesen wurde
     for idx in 0..8 {
         assert_eq!(emu.display.get_pixel(0, idx), false);
@@ -292,7 +289,7 @@ fn test_execute_0xf000() {
     emu.execute(0xF00A);
     // PC sollte um 2 kleiner werden um warten zu simulieren, während auf die Eingabe gewartet wird
     assert_eq!(old_pc - 2, emu.pc);
-    emu.current_key = Some(Key::K9);
+    emu.current_key = Some(Key::KA);
     emu.execute(0xF00A);
     assert_eq!(emu.test_get_registers(0), 0x0A);
 }
