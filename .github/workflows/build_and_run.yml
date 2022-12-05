@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  tests:
    defaults:
       run:
         working-directory: tomo
