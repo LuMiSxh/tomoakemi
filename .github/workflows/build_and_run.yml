@@ -120,7 +120,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: tomo
-          path: ../
+          path: tomo
 
       - name: DEBUG list directory
         run: ls
