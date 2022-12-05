@@ -1,0 +1,22 @@
+.grid-container
+  min-height: 100vh
+  width: 100%
+  display: grid
+  grid-row: none
+  grid-template-rows: none
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  @include phone-size
+    grid-template-rows: repeat(2, minmax(0, 1fr))
+    grid-template-columns: none
+
+  .grid-content
+    width: 100%
+    height: 100%
+
+.height-limited-grid-container
+  display: grid
+  width: 100%
+  grid-row: none
+  grid-template-rows: none
+  grid-template-columns: repeat(2, minmax(0, 1fr))

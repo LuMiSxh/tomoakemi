@@ -1,0 +1,64 @@
+@import "../../../node_modules/rfs/sass"
+
+h1, h2, h3, h4, h5, h6
+  color: $blue-300
+
+p, label, input, button
+  color: $gray-50
+
+h1
+  @include rfs(2.188rem, font-size)
+
+h2
+  @include rfs(2rem, font-size)
+
+h3
+  @include rfs(1.813rem, font-size)
+
+h4
+  @include rfs(1.625rem, font-size)
+
+h5
+  @include rfs(1.438rem, font-size)
+
+h6
+  @include rfs(1.25rem, font-size)
+
+p, a
+  @include rfs(1.125rem, font-size)
+
+
+@font-face
+  font-family: 'SF Mono'
+  src: url('https://fonts.cdnfonts.com/css/sf-mono')
+
+
+a
+  text-decoration: none
+  color: $magenta-400
+
+  &:after
+    content: "」"
+    font-size: 95%
+    color: $magenta-300
+
+    position: relative
+    left: -2%
+    top: 3.5px
+
+    @include phone-size
+      left: -2%
+      top: 2.5px
+
+  &:before
+    content: "「"
+    font-size: 95%
+    color: $magenta-300
+
+    position: relative
+    left: 2%
+    top: -3.5px
+
+    @include phone-size
+      left: 1%
+      top: -1.5px

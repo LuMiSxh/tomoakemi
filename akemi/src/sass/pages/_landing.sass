@@ -1,0 +1,26 @@
+.landing-link
+  @include rfs(2.188rem, font-size)
+
+.project-name
+  -webkit-background-clip: text
+  -webkit-text-fill-color: transparent
+
+  background-repeat: no-repeat
+  background-size: 400% 400%
+  background-position: center
+
+  background-color: $green-500
+  background-image: -webkit-linear-gradient(-70deg, $blue-600 25%, $magenta-600 50%, $green-600)
+  animation: gradient 6s ease infinite
+
+  @keyframes gradient
+    0%
+      background-position: 0 50%
+
+    50%
+      background-position: 200% 50%
+
+    100%
+      background-position: 0 50%
+
+  font-size: 150%

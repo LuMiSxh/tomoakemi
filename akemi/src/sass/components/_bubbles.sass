@@ -1,0 +1,57 @@
+
+.component
+  .bubble-background
+    height: 100vh
+    max-height: 100vh
+    width: 100%
+    position: relative
+
+  .bubble-content
+    width: 100%
+    height: 100%
+    max-height: 100vh
+    position: absolute
+    top: 0
+    left: 0
+    z-index: 1
+
+  .bubble-particles
+    position: absolute
+    display: flex
+    justify-content: space-around
+    width: 100%
+    height: 100%
+    top: 0
+    left: 0
+    z-index: 0
+
+    div
+      position: relative
+      border-radius: 50%
+
+      animation: animate 15s linear infinite
+      animation-duration: calc(125s / var(--i))
+
+      @for $i from 0 through 512
+        &:nth-child(#{$i})
+          $r: random(30)
+          $c: nth($particles, random(length($particles)))
+          width: $r+px
+          height: $r+px
+          aspect-ratio: 1
+          box-shadow: 0 0 10px darken($c, 20%), 0 0 50px $c, 0 0 100px $c
+
+          background-color: $c
+
+          animation-duration: calc(255s / #{random(100) + 10})
+
+
+      @keyframes animate
+        0%
+          transform: translateY(98vh) scale(0)
+
+        5%
+          transform: translateY(95vh) scale(0.4)
+
+        100%
+          transform: translateY(-10vh) scale(1)

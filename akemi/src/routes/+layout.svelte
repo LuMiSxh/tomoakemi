@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '@styles/app.sass';
+	import '@sass/app.sass';
 </script>
 
 <slot />

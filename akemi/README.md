@@ -4,7 +4,7 @@ Akemi consists of a Sveltekit frontend using the Vite build-tool.
 
 ## Usage
 
-- *Build*: `pnpm build`
-- *Dev*: `pnpm dev` __(Does not currently support Webassembly)__
-- *Preview*: `pnpm preview`
-- *Test*: `pnpm test`
+- _Build_: `pnpm build`
+- _Dev_: `pnpm dev` **(Does not currently support Webassembly)**
+- _Preview_: `pnpm preview`
+- _Test_: `pnpm test`

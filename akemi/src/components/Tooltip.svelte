@@ -1,6 +1,4 @@
 <script lang="ts">
-	import '../styles/comp_tooltip.sass';
-
 	export let title = '';
 	let isHovered = false;
 	let x;
@@ -21,7 +19,7 @@
 </script>
 
 <div
-	class="tooltip_wrapper"
+	class="component tooltip-wrapper"
 	on:focus={{}}
 	on:mouseover={mouseOver}
 	on:mouseleave={mouseLeave}
@@ -31,5 +29,5 @@
 </div>
 
 {#if isHovered}
-	<div style="top: {y}px; left: {x}px;" class="tooltip">{title}</div>
+	<div style="top: {y}px; left: {x}px;" class="component tooltip">{title}</div>
 {/if}

@@ -13,6 +13,7 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "next",
+		"@sveltejs/adapter-static": "1.0.0-next.48",
 		"@sveltejs/kit": "next",
 		"@typescript-eslint/eslint-plugin": "^5.27.0",
 		"@typescript-eslint/parser": "^5.27.0",
@@ -33,6 +34,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"rfs": "^9.0.6",
 		"tomo": "link:..\\tomo\\pkg"
 	}
 }

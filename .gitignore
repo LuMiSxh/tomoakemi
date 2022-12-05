@@ -3,6 +3,7 @@
 node_modules
 .build
 .svelte-kit
+build
 .package
 .idea
 .env

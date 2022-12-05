@@ -10,7 +10,7 @@ const config: UserConfig = {
 	resolve: {
 		alias: {
 			'@lib': path.resolve('./src/lib'),
-			'@styles': path.resolve('./src/styles'),
+			'@sass': path.resolve('./src/sass'),
 			'@components': path.resolve('./src/components'),
 			'@assets': path.resolve('./src/assets')
 		}
