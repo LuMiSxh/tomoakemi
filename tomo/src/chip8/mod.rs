@@ -6,7 +6,7 @@ pub const DISPLAY_HEIGHT: usize = 32;
 pub const DISPLAY_WIDTH: usize = 64;
 
 const RAM_SIZE: usize = 4096;
-const OPCODE_SIZE: usize = 2;
+pub const OPCODE_SIZE: usize = 2;
 const REGISTER_SIZE: usize = 18;
 const STACK_SIZE: usize = 16;
 

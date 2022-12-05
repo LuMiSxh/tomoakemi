@@ -4,7 +4,6 @@ use tomo::chip8::DISPLAY_HEIGHT as HOEHE;
 use tomo::chip8::DISPLAY_WIDTH as BREITE;
 use tomo::chip8::processor::{Key, Processor as CHIP8, Register};
 
-// TODO: Tests beheben
 #[wasm_bindgen_test]
 fn test_initialization() {
     let emu = CHIP8::new();
@@ -46,8 +45,8 @@ fn test_execute_0x2000() {
     // Test CALL-Operation
     emu.pc = 0xDEAD;
     emu.execute(0x2FED);
-    assert_eq!(emu.pc, 0xFEF);
-    assert_eq!(emu.test_get_stack(emu.sp as usize), 0xDEAD);
+    assert_eq!(emu.pc, 0xFED);
+    assert_eq!(emu.test_get_stack((emu.sp - 1) as usize), 0xDEAD + 2);
 }
 
 #[wasm_bindgen_test]
@@ -72,12 +71,12 @@ fn test_execute_0x4000() {
     emu.pc = 0;
     emu.test_set_registers(0, 0xAD);
     emu.execute(0x40AD);
-    assert_eq!(emu.pc, 0);
+    assert_eq!(emu.pc, 2);
 
     emu.pc = 0;
     emu.test_set_registers(0, 0);
     emu.execute(0x40AD);
-    assert_eq!(emu.pc, 2);
+    assert_eq!(emu.pc, 4);
 }
 
 #[wasm_bindgen_test]
@@ -88,14 +87,14 @@ fn test_execute_0x5000() {
     emu.test_set_registers(0x1, 0xAB);
 
     emu.execute(0x5010);
-    assert_eq!(emu.pc, 2);
+    assert_eq!(emu.pc, 4);
 
     emu.pc = 0;
     emu.test_set_registers(0x0, 0xAB);
     emu.test_set_registers(0x1, 0xCD);
 
     emu.execute(0x5010);
-    assert_eq!(emu.pc, 0);
+    assert_eq!(emu.pc, 2);
 }
 
 #[wasm_bindgen_test]

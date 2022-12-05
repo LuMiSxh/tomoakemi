@@ -26,14 +26,13 @@ impl ProgramCounter {
 #[wasm_bindgen(getter_with_clone)]
 pub struct Output {
     pub success: bool,
-    pub ep_x: Vec<usize>,
-    pub ep_y: Vec<usize>,
+    pub opcode: u16,
 }
 
 // Tasten als Klassen-Repräsentation
 #[wasm_bindgen]
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Key {
     K1,
     K2,
@@ -159,17 +158,12 @@ impl Processor {
         let y = nibbles.2 as usize;
         let n = nibbles.3 as usize;
 
-        // Bearbeitete Pixel des Display
-        let mut pixel_x: Vec<usize> = vec![];
-        let mut pixel_y: Vec<usize> = vec![];
         let mut success: bool = true;
 
         let pc_change: ProgramCounter = match nibbles {
             (0x00, 0x00, 0x0e, 0x00) => {
                 // CLS: Display leeren
                 self.display.cls();
-                pixel_x = (0..DISPLAY_WIDTH).collect();
-                pixel_y = (0..DISPLAY_HEIGHT).collect();
                 ProgramCounter::Next
             }
             (0x00, 0x00, 0x0e, 0x0e) => {
@@ -186,10 +180,10 @@ impl Processor {
                 // Adresse auf
                 self.stack[self.sp as usize] = (self.pc as usize + OPCODE_SIZE) as u16;
                 self.sp += 1;
-                ProgramCounter::Next
+                ProgramCounter::Jump(nnn)
             }
             (0x03, _, _, _) => {
-                // SNE (Vx, Kk): Überspringen der nächsten Instruktion,
+                // SE (Vx, Kk): Überspringen der nächsten Instruktion,
                 // wenn Vx == Kk
                 ProgramCounter::skip_if(self.registers[x] == kk)
             }
@@ -199,7 +193,7 @@ impl Processor {
                 ProgramCounter::skip_if(self.registers[x] != kk)
             }
             (0x05, _, _, 0x00) => {
-                // SNE (Vx, Vy): Überspringen der nächsten Instruktion,
+                // SE (Vx, Vy): Überspringen der nächsten Instruktion,
                 // wenn Vx == Vy
                 ProgramCounter::skip_if(self.registers[x] == self.registers[y])
             }
@@ -211,7 +205,10 @@ impl Processor {
             (0x07, _, _, _) => {
                 // ADD (Vx, Kk): Addiert Kk auf den Wert des Registers
                 // Vx und speicher dies dort
-                self.registers[x] += kk;
+                let vx = self.registers[x] as u16;
+                let val = kk as u16;
+                let result = vx + val;
+                self.registers[x] = result as u8;
                 ProgramCounter::Next
             }
             (0x08, _, _, 0x00) => {
@@ -255,16 +252,14 @@ impl Processor {
                 // SUB (Vx, Vy): Subtrahieren des Register Wertes von Vy
                 // und Vx und speicherung des Wertes in Vx
                 // Wenn Vy > Vx, dann VF 1, andernfalls 0
-                self.registers[Register::VF as usize] = if self.registers[y] > self.registers[x] { 1 } else { 0 };
-                self.registers[x] = self.registers[y].wrapping_sub(self.registers[x]);
+                self.registers[Register::VF as usize] = if self.registers[x] > self.registers[y] { 1 } else { 0 };
+                self.registers[x] = self.registers[x].wrapping_sub(self.registers[y]);
                 ProgramCounter::Next
             }
             (0x08, _, _, 0x06) => {
                 // SHR (Vx): Wenn das unbedeutendste Bit von VX 1 ist, wird VF auf 1
                 // gesetzt, ansonsten 0 und Vx wird durch 2 geteilt
-                let lsb = self.registers[x] & 1;
-                // 15 für VF
-                self.registers[Register::VF as usize] = lsb;
+                self.registers[Register::VF as usize] = self.registers[x] & 1;
                 self.registers[x] >>= 1;
                 ProgramCounter::Next
             }
@@ -310,11 +305,16 @@ impl Processor {
                 // Index-Register. DIe Bytes werden dann als "Sprite" auf dem Bildschirm
                 // an der Stelle (Vx | Vy) dargestellt. Wenn an der Stelle ein Pixel
                 // gelöscht wird, wird das VF Register auf 1 gestellt, ansonsten 0
-                let mut out = self.display.draw(self.registers[x] as usize, self.registers[y] as usize,
-                                                &self.ram[self.i_reg as usize..(self.i_reg + n as u16) as usize]);
-                self.registers[Register::VF as usize] = if out.collision { 1 } else { 0 };
-                pixel_x.append(&mut out.pixel_x);
-                pixel_y.append(&mut out.pixel_y);
+                self.registers[Register::VF as usize] = 0;
+                for byte in 0..n {
+                    let y = (self.registers[y] as usize + byte) % DISPLAY_HEIGHT;
+                    for bit in 0..8 {
+                        let x = (self.registers[x] as usize + bit) % DISPLAY_WIDTH;
+                        let color = (self.ram[self.i_reg as usize + byte] >> (7 - bit)) & 1;
+                        self.registers[Register::VF as usize] |= u8::from(color & (if self.display.get_pixel(y, x) { 1 } else { 0 }));
+                        self.display.set_pixel(y, x, ((if self.display.get_pixel(y, x) { 1 } else { 0 }) ^ color) == 1);
+                    }
+                }
 
                 ProgramCounter::Next
             }
@@ -361,12 +361,13 @@ impl Processor {
             (0x0f, _, 0x01, 0x0e) => {
                 // ADD (I_reg, Vx): Index Register wird um den Wer des Vx Registers erhöht
                 self.i_reg += u16::from(self.registers[x]);
+                self.registers[Register::VF as usize] = if self.i_reg > 0x0F00 {1} else {0};
                 ProgramCounter::Next
             }
             (0x0f, _, 0x02, 0x09) => {
                 // LD (F, Vx): Index Register wird auf den Hex Wer (Darum *5) für die Position
                 // eines Sprite aus dem Wert des Vx Registers gestellt
-                self.i_reg = (x * 5) as u16;
+                self.i_reg = ( self.registers[x] * 5) as u16;
                 ProgramCounter::Next
             }
             (0x0f, _, 0x03, 0x03) => {
@@ -410,8 +411,7 @@ impl Processor {
 
         Output {
             success,
-            ep_x: pixel_x,
-            ep_y: pixel_y,
+            opcode
         }
     }
 
@@ -421,6 +421,19 @@ impl Processor {
         for i in 0..80 {
             self.ram[i] = FONT[i];
         }
+    }
+
+    pub fn tick(&mut self) -> Output {
+        if self.registers[Register::DT as usize] > 0 {
+            self.registers[Register::DT as usize] -= 1;
+        }
+
+        if self.registers[Register::ST as usize] > 0 {
+            self.registers[Register::ST as usize] -= 1;
+        }
+
+        let opcode = self.fetch();
+        self.execute(opcode)
     }
 
     // Boolean, ob ein Piep-Ton gespielt werden soll
@@ -500,5 +513,9 @@ impl Processor {
 
     pub fn test_get_stack(&mut self, idx: usize) -> u16 {
         self.stack[idx]
+    }
+
+    pub fn test_set_stack(&mut self, idx: usize, data: u16) {
+        self.stack[idx] = data;
     }
 }
