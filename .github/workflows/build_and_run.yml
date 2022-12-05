@@ -104,9 +104,6 @@ jobs:
           name: tomo
           path: tomo/pkg
 
-      - name: DEBUG list directory
-        run: ls
-
       - name: Install dependencies
         run: pnpm install
 
@@ -130,10 +127,12 @@ jobs:
           name: akemi
           path: build
 
-      - name: DEBUG list directory
-        run: ls
+      - name: Configure git to trust the workspace despite the different owner
+        run:
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build
+          token: ${{ secrets.GITHUB_TOKEN }}
