@@ -3,7 +3,7 @@
 node_modules
 .build
 .svelte-kit
-build
+public
 .package
 .idea
 .env
@@ -20,5 +20,3 @@ bin/
 pkg
 wasm-pack.log
 *.iml
-.idea
-alter_chip

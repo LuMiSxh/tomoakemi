@@ -104,34 +104,11 @@ jobs:
           name: tomo
           path: tomo/pkg
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: Install Vercel CLI
+        run: pnpm install --global vercel@latest
 
-      - name: Build SvelteKit project
-        run: pnpm build
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: akemi
-          if-no-files-found: error
-          path: akemi/build
-
-  Deploy:
-    runs-on: ubuntu-latest
-    needs: [tomo, akemi]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download Akemi build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: akemi
-          path: build
-
-      - name: Deploy to Github Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: build
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
