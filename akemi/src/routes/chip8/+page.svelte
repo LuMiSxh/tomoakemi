@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import * as chip8 from 'tomo';
+	import * as chip8 from '../tomo/pkg';
 	import { onMount } from 'svelte';
 	// CUP
 	let emu: chip8.Processor;

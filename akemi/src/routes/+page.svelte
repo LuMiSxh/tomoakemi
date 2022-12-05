@@ -14,7 +14,7 @@
 			</h1>
 		</div>
 		<div class="grid-content center-all">
-			<a href="{base}/emulators" class="landing-link">Get started</a>
+			<a href="{base}/chip8" class="landing-link">Get started</a>
 		</div>
 	</main>
 </Waves>
