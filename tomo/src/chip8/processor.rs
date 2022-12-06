@@ -205,10 +205,7 @@ impl Processor {
             (0x07, _, _, _) => {
                 // ADD (Vx, Kk): Addiert Kk auf den Wert des Registers
                 // Vx und speicher dies dort
-                let vx = self.registers[x] as u16;
-                let val = kk as u16;
-                let result = vx + val;
-                self.registers[x] = result as u8;
+                self.registers[x] += kk as u16;
                 ProgramCounter::Next
             }
             (0x08, _, _, 0x00) => {
@@ -241,10 +238,7 @@ impl Processor {
                 // Wenn Vx größer als u8 ist, wird VF auf 1 gesetzt,
                 // andernfalls auf 0 und es wird nur die u8 Form der
                 // Zahl gespeichert
-                let vx = self.registers[x] as u16;
-                let vy = self.registers[y] as u16;
-                let result = vx + vy;
-                self.registers[x] = result as u8;
+                self.registers[x] += self.registers[y] as u8;
                 self.registers[Register::VF as usize] = if result > 0xFF { 1 } else { 0 };
                 ProgramCounter::Next
             }

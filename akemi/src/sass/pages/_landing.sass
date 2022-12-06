@@ -1,26 +1,45 @@
 .landing-link
   @include rfs(2.188rem, font-size)
+  font-weight: bolder
+
+.welcome
+  margin: 0
+  padding: 0
 
 .project-name
+  @include rfs(2.488rem, font-size)
   -webkit-background-clip: text
   -webkit-text-fill-color: transparent
 
   background-repeat: no-repeat
   background-size: 400% 400%
   background-position: center
+  cursor: pointer
+  margin: 0
+  padding: 0
 
   background-color: $green-500
-  background-image: -webkit-linear-gradient(-70deg, $blue-600 25%, $magenta-600 50%, $green-600)
-  animation: gradient 6s ease infinite
+  background-image: -webkit-linear-gradient(-70deg, $blue-500 33%, $magenta-500 66%, $green-500)
+  animation: gradient 6s infinite cubic-bezier(.45,.99,.56,-0.01)
 
   @keyframes gradient
     0%
       background-position: 0 50%
 
     50%
-      background-position: 200% 50%
+      background-position: 150% 50%
 
     100%
       background-position: 0 50%
 
-  font-size: 150%
+.not-so-high
+  height: 97vh
+
+.designed-by
+  height: 3vh
+
+  .designer
+    @include rfs(2rem, font-size)
+
+    padding: 0
+    margin: 0

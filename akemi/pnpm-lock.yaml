@@ -8,6 +8,7 @@ specifiers:
   eslint: ^8.16.0
   eslint-config-prettier: ^8.3.0
   eslint-plugin-svelte3: ^4.0.0
+  filedrop-svelte: ^0.1.2
   prettier: ^2.6.2
   prettier-plugin-svelte: ^2.7.0
   rfs: ^9.0.6
@@ -34,6 +35,7 @@ devDependencies:
   eslint: 8.28.0
   eslint-config-prettier: 8.5.0_eslint@8.28.0
   eslint-plugin-svelte3: 4.0.0_xgu65rlhscpnxffotiaicv6m5i
+  filedrop-svelte: 0.1.2
   prettier: 2.7.1
   prettier-plugin-svelte: 2.8.1_nryolsexf6k3znhuh4uzpugsem
   sass: 1.56.1
@@ -1042,6 +1044,20 @@ packages:
       flat-cache: 3.0.4
     dev: true
 
+  /file-selector/0.2.4:
+    resolution: {integrity: sha512-ZDsQNbrv6qRi1YTDOEWzf5J2KjZ9KMI1Q2SGeTkCJmNNW25Jg4TW4UMcmoqcg4WrAyKRcpBXdbWRxkfrOzVRbA==}
+    engines: {node: '>= 10'}
+    dependencies:
+      tslib: 2.4.1
+    dev: true
+
+  /filedrop-svelte/0.1.2:
+    resolution: {integrity: sha512-S0Z+zCO2dy/g3tRjswD8pLEcorj78olkLWvhKEp511gwHUI6x+uWjXacuvFmRQnjbCCPByXzGlC5Asb9nPzUKw==}
+    dependencies:
+      file-selector: 0.2.4
+      pretty-bytes: 6.0.0
+    dev: true
+
   /fill-range/7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
     engines: {node: '>=8'}
@@ -1481,6 +1497,11 @@ packages:
     resolution: {integrity: sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==}
     engines: {node: '>=10.13.0'}
     hasBin: true
+    dev: true
+
+  /pretty-bytes/6.0.0:
+    resolution: {integrity: sha512-6UqkYefdogmzqAZWzJ7laYeJnaXDy2/J+ZqiiMtS7t7OfpXWTlaeGMwX8U6EFvPV/YWWEKRkS8hKS4k60WHTOg==}
+    engines: {node: ^14.13.1 || >=16.0.0}
     dev: true
 
   /punycode/2.1.1:

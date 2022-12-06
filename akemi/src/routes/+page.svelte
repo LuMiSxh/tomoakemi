@@ -1,20 +1,26 @@
 <script lang="ts">
-	import Tooltip from '../components/Tooltip.svelte';
-	import Waves from '@components/Bubbles.svelte';
+  import Waves from "@components/Bubbles.svelte";
 
-	import { base } from '$app/paths';
+  let showHanagana = true;
+
+  import { base } from "$app/paths";
 </script>
 
 <Waves>
-	<main class="grid-container">
-		<div class="grid-content center-all">
-			<h1>
-				Welcome to
-				<Tooltip title="Tomo-Akemi"><span class="project-name">ともあけみ</span></Tooltip>
-			</h1>
-		</div>
-		<div class="grid-content center-all">
-			<a href="{base}/chip8" class="landing-link">Get started</a>
-		</div>
-	</main>
+  <main class="height-limited-grid-container not-so-high">
+    <div class="grid-content center-all">
+      <h1 class="welcome">
+        Welcome to
+      </h1>
+      <h1 class="project-name" on:click={() => showHanagana = !showHanagana} on:keydown on:keyup>
+        {showHanagana ? "ともあけみ" : "Tomo Akemi"}
+      </h1>
+    </div>
+    <div class="grid-content center-all">
+      <a href="{base}/chip8" class="landing-link">Get started</a>
+    </div>
+  </main>
+  <div class="designed-by center-all">
+    <h2>Designed by<a href="https://github.com/lumisxh" target="_blank" rel="noreferrer" class="designer">LuMiSxh</a></h2>
+  </div>
 </Waves>

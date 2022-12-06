@@ -1,5 +1,8 @@
 <script lang="ts">
-	import '@sass/app.sass';
 </script>
 
 <slot />
+
+<style lang="sass" global>
+  @import '../sass/app.sass'
+</style>

@@ -2,39 +2,60 @@
   width: 100%
   max-height: 25rem
 
-  h1
-    margin: 0
-    padding: 1rem
+  margin: 0
+  padding: 0
 
-  label
-    max-width: 100%
+  border: 2px dot-dot-dash $green-400
+
+.label
+  outline: none
+  margin: 0
+  padding: 0
+
+.input
+  cursor: pointer
+  padding: 1rem
+  margin: 1.2rem
+  outline: none
+  border: 2px solid $gray-400
+  background-color: $gray-500
+
+  &:focus
     outline: none
-    border: none
+    border: 2px solid $blue-600
 
-    &:focus
-      outline: none
-      border: 2px solid $blue-600
+.btn-wee
+  padding: 1rem
+  margin: 0.5rem
+  cursor: pointer
 
-    input
-      cursor: pointer
-      background-color: $gray-400
-      padding: 1rem
-      margin: 1.2rem
-      border-radius: 50%
-      outline: none
-      border: none
+  outline: none
+  border: 2px solid $gray-400
 
-      &:focus
-        outline: none
-        border: 2px solid $blue-600
+  &:focus
+    outline: none
+    border: 2px solid $blue-600
 
-  .btn-wee
-    padding: 1.5rem
-    border-radius: 50%
-    margin: 1.2rem
+.starter
+  background-color: $green-600
 
-  .starter
-    background-color: $green-500
+.stopper
+  background-color: $magenta-700
 
-  .stopper
-    background-color: $magenta-500
+.file-dropper
+  border-width: 2px
+  border-color: $blue-500
+  border-style: dashed
+  cursor: pointer
+
+  color: $gray-50
+  margin: 1.5rem
+  width: 44%
+  height: 44%
+
+.disable-dropper
+  cursor: not-allowed
+  border-color: $gray-400
+
+.disable-input
+  cursor: not-allowed
