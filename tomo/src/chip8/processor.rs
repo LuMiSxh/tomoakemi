@@ -205,7 +205,7 @@ impl Processor {
             (0x07, _, _, _) => {
                 // ADD (Vx, Kk): Addiert Kk auf den Wert des Registers
                 // Vx und speicher dies dort
-                self.registers[x] += kk as u16;
+                self.registers[x] += kk as u8;
                 ProgramCounter::Next
             }
             (0x08, _, _, 0x00) => {
@@ -238,7 +238,10 @@ impl Processor {
                 // Wenn Vx größer als u8 ist, wird VF auf 1 gesetzt,
                 // andernfalls auf 0 und es wird nur die u8 Form der
                 // Zahl gespeichert
-                self.registers[x] += self.registers[y] as u8;
+                let vx = self.registers[x] as u16;
+                let vy = self.registers[y] as u16;
+                let result = vx + vy;
+                self.registers[x] = result as u8;
                 self.registers[Register::VF as usize] = if result > 0xFF { 1 } else { 0 };
                 ProgramCounter::Next
             }
@@ -355,13 +358,13 @@ impl Processor {
             (0x0f, _, 0x01, 0x0e) => {
                 // ADD (I_reg, Vx): Index Register wird um den Wer des Vx Registers erhöht
                 self.i_reg += u16::from(self.registers[x]);
-                self.registers[Register::VF as usize] = if self.i_reg > 0x0F00 {1} else {0};
+                self.registers[Register::VF as usize] = if self.i_reg > 0x0F00 { 1 } else { 0 };
                 ProgramCounter::Next
             }
             (0x0f, _, 0x02, 0x09) => {
                 // LD (F, Vx): Index Register wird auf den Hex Wer (Darum *5) für die Position
                 // eines Sprite aus dem Wert des Vx Registers gestellt
-                self.i_reg = ( self.registers[x] * 5) as u16;
+                self.i_reg = (self.registers[x] * 5) as u16;
                 ProgramCounter::Next
             }
             (0x0f, _, 0x03, 0x03) => {
@@ -405,7 +408,7 @@ impl Processor {
 
         Output {
             success,
-            opcode
+            opcode,
         }
     }
 
